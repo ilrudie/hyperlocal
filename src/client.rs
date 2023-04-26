@@ -1,9 +1,11 @@
 use hex::FromHex;
 use hyper::{
-    client::connect::{Connected, Connection},
-    service::Service,
-    Body, Client, Uri,
+    body::Incoming, Uri,
 };
+use tower::Service;
+use hyper_util::client::connect::{Connected, Connection};
+use hyper_util::client::legacy::Client;
+use hyper_util::rt::TokioExecutor;
 use pin_project_lite::pin_project;
 use std::{
     future::Future,
@@ -77,6 +79,10 @@ pub struct UnixConnector;
 
 impl Unpin for UnixConnector {}
 
+// impl Connect for UnixConnector {
+
+// }
+
 impl Service<Uri> for UnixConnector {
     type Response = UnixStream;
     type Error = io::Error;
@@ -142,9 +148,9 @@ pub trait UnixClientExt {
     /// let client = Client::unix();
     /// ```
     #[must_use]
-    fn unix() -> Client<UnixConnector, Body> {
-        Client::builder().build(UnixConnector)
+    fn unix() -> Client<UnixConnector, Incoming> {
+        Client::builder(TokioExecutor::new()).build(UnixConnector)
     }
 }
 
-impl UnixClientExt for Client<UnixConnector> {}
+impl UnixClientExt for Client<UnixConnector, Incoming> {}
